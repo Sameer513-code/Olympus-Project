@@ -3,8 +3,8 @@ The repository contains files for all 3 tasks.
 Task Details and Approach <br>
 <br>
 Task 1: Red Wine Regression Rally <br>
-The objective is to perform data analysis on a wine dataset to understand the factors affecting wine quality. <br>
-The libraries used were pandas, numpy, matplotlib, and seaborn.<br>
+Objective: Perform data analysis on a wine dataset to understand the factors affecting wine quality. <br>
+Libraries used: Pandas, numpy, matplotlib, and seaborn.<br>
 Our approach is to first load and explore the dataset to understand the data structure and types.<br>
 Conducted data cleaning and handling missing values or removing duplicate rows.<br>
 Created graphs to analyse and visualize the trends in chemical properties and compare them. <br>

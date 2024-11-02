@@ -1,4 +1,3 @@
-#Olympus-Project
 The repository contains files for all 3 tasks.
 <br>
 Task Details and Approach <br>

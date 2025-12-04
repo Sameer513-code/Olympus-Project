@@ -1,7 +1,98 @@
-# AI Image Processing Models - Inference Guide
+# Compute Profile
 
-> 🔗 **Original GitHub repositories linked at the [bottom of this README](#github-repositories)**
+| Metric | CodeFormer | LaMa | U²-Net | SAM (ViT-B) | PCA-KD | LYT-Net | NAFNet-width64 | PCT-Net ViT |
+|--------|------------|------|--------|-------------|--------|---------|----------------|-------------|
+| **Task** | Face Restoration | Image Inpainting | Salient Object Segmentation | Promptable Segmentation | Style Transfer | Low-Light Enhancement | Image Denoise/Deblur | Image Harmonization |
+| | | | | | | | | |
+| **PARAMETERS** | | | | | | | | |
+| Total | 94.11M | 51.06M | 44.0M (main) / 1.13M (lite) | 93.74M | 72.84K | 44.92K | 67.89M | 4.81M |
+| | | | | | | | | |
+| **MODEL SIZE** | | | | | | | | |
+| Checkpoint | 376.64 MB | 410.05 MB | 167.8 MB / 4.7 MB (lite) | 357 MB | 0.29 MB | 0.20 MB | 258.98 MB | 18.39 MB |
+| | | | | | | | | |
+| **INPUT/OUTPUT** | | | | | | | | |
+| Input Resolution | 512×512 (FIXED) | Variable + Mask | Variable (opt 320×320) | Variable → 1024 | Variable (÷32) | Variable | Variable | Variable (composite + mask) |
+| Output Resolution | 512×512×3 | Same as input | Same (1 channel) | 3 masks @ input res | Same as input | Same as input | Same as input | Same as input |
+| | | | | | | | | |
+| **CPU INFERENCE** | | | | | | | | |
+| Latency (256×256) | - | - | ~200 ms | 9,009 ms | **65.67 ms** | 245.06 ms | 2,013.88 ms | 126 ms |
+| Latency (512×512) | 4,761 ms | 2,437 ms | ~600 ms | 9,009 ms | **95.58 ms** | 1,006.31 ms | 8,975.93 ms | 356 ms |
+| Latency (Native) | 4,761 ms @512 | 2,437 ms @512 | ~600 ms @320 | 9,009 ms @1024 | 65.67 ms @256 | 245.06 ms @256 | 2,013.88 ms @256 | 659 ms @512 |
+| Throughput (FPS) | 0.21 | 0.41 | ~1.5 | 0.11 | **15.23** | 4.08 | 0.50 | 2.4 |
+| | | | | | | | | |
+| **GPU INFERENCE** | | | | | | | | |
+| GPU Latency (mean) | 70 ms (V100) | ~50-100 ms | 19.73 ms | ~50 ms (A100) | 40 ms (GTX 1080) | 2.3 ms | 8.4% SOTA cost | 25.68 ms |
+| | | | | | | | | |
+| **ACCURACY** | | | | | | | | |
+| Benchmark Dataset | CelebA-Test | Places2 | DUTS-TE | SA-1B (23 datasets) | COCO | LOLv1 | GoPro / SIDD | iHarmony4 |
+| | | | | | | | | |
+| **ARCHITECTURE** | | | | | | | | |
+| Type | Transformer + VQGAN | FFT-based CNN | Nested U-Net | Vision Transformer | Distilled CNN | YUV Transformer | UNet + NAFBlocks | Vision Transformer |
+| | | | | | | | | |
+| **EFFICIENCY** | | | | | | | | |
+| FLOPs/GMACs | ~100 GFLOPs | ~50 GFLOPs | ~30 GFLOPs | ~180 GFLOPs | 0.72% of WCT2 | 3.49 GFLOPs | 1.1-65 GMACs | ~10 GFLOPs |
+| Speed Rank (CPU) | 7th | 5th | 3rd | 8th (slowest) | **1st (fastest)** | 2nd | 4th | 5th |
+| | | | | | | | | |
+| **TRAINING DATA** | | | | | | | | |
+| Dataset | FFHQ | Places2 | DUTS-TR | SA-1B (11M images) | COCO | LOL | GoPro/SIDD | iHarmony4 |
+| | | | | | | | | |
+| **VARIANTS** | | | | | | | | |
+| Available | CodeFormer | LaMa | U²-Net, U²-Net-lite | ViT-B, ViT-L, ViT-H | MobileNet, VGG | LYT | width32, width64, SIDD | ViT_pct, CNN_pct, sym, polynomial, identity, mul, add |
+| Tested Variant | Base | Big-LaMa | Full | ViT-B (93.74M) | MobileNet (72.84K) | Base (44.92K) | width64 (67.89M) | ViT_pct (4.81M) |
 
+---
+
+## Summary Rankings
+
+### By Model Size (Smallest to Largest)
+| Rank | Model | Parameters | Checkpoint |
+|------|-------|------------|------------|
+| 1 | LYT-Net | 44.92K | 0.20 MB |
+| 2 | PCA-KD | 72.84K | 0.29 MB |
+| 3 | U²-Net-lite | 1.13M | 4.7 MB |
+| 4 | PCT-Net ViT | 4.81M | 18.39 MB |
+| 5 | U²-Net | 44.0M | 167.8 MB |
+| 6 | LaMa | 51.06M | 410.05 MB |
+| 7 | NAFNet | 67.89M | 258.98 MB |
+| 8 | SAM | 93.74M | 357 MB |
+| 9 | CodeFormer | 94.11M | 376.64 MB |
+
+### By CPU Speed @256×256 (Fastest to Slowest)
+| Rank | Model | Latency | FPS |
+|------|-------|---------|-----|
+| 1 | PCA-KD | 65.67 ms | 15.23 |
+| 2 | PCT-Net | 126 ms | 2.4 |
+| 3 | U²-Net | ~200 ms | ~1.5 |
+| 4 | LYT-Net | 245.06 ms | 4.08 |
+| 5 | NAFNet | 2,013.88 ms | 0.50 |
+| 6 | SAM | 9,009 ms | 0.11 |
+
+### By CPU Speed @512×512 (Fastest to Slowest)
+| Rank | Model | Latency | FPS |
+|------|-------|---------|-----|
+| 1 | PCA-KD | 95.58 ms | 10.46 |
+| 2 | PCT-Net | 356 ms | 2.81 |
+| 3 | U²-Net | ~600 ms | ~1.67 |
+| 4 | LYT-Net | 1,006.31 ms | 0.99 |
+| 5 | LaMa | 2,437 ms | 0.41 |
+| 6 | CodeFormer | 4,761 ms | 0.21 |
+| 7 | NAFNet | 8,975.93 ms | 0.11 |
+| 8 | SAM | 9,009 ms | 0.11 |
+
+---
+
+## Key Takeaways
+
+- **Smallest Models:** LYT-Net (44.92K) and PCA-KD (72.84K) - ~1000x smaller than large models
+- **Fastest CPU:** PCA-KD at 15.23 FPS @256×256 - 10x faster than next best
+- **Only Fixed Resolution:** CodeFormer (512×512 only)
+- **Foundation Model:** SAM - trained on 1.1B masks, zero-shot capability
+- **Best for Real-time:** PCA-KD and PCT-Net viable for interactive use
+- **Newest Addition:** PCT-Net (CVPR 2023) - image harmonization for composites
+
+
+
+# Inference Guide
 ---
 
 ## Prerequisites
@@ -378,6 +469,7 @@ docker exec -it <CONTAINER_NAME> bash
 | SAM | 1024×1024 | ~9 seconds |
 | LaMa | 512×512 | ~2.5 seconds |
 | LYT-Net | 512×512 | ~1 second |
+| PCT-Net | 512×512 | ~0.4 seconds |
 
 > **Note:** Actual performance varies based on your hardware.
 
@@ -408,14 +500,15 @@ Replace these placeholders with your actual values:
 | SAM | [github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything) |
 | LaMa | [github.com/advimman/lama](https://github.com/advimman/lama) |
 | LYT-Net | [github.com/albrateanu/LYT-Net](https://github.com/albrateanu/LYT-Net) |
+| PCT-Net | [https://github.com/rakutentech/PCT-Net-Image-Harmonization](https://github.com/rakutentech/PCT-Net-Image-Harmonization) |
 
 ---
 
-## 📌 Models & Citations
+## Models & Citations
 
 ---
 
-### ** NAFNet — Image Restoration**
+### NAFNet — Image Restoration
 
 **Paper:** *Simple Baselines for Image Restoration*
 
@@ -430,7 +523,7 @@ Replace these placeholders with your actual values:
 
 ---
 
-### ** LYT-Net — Low-Light Enhancement**
+### LYT-Net — Low-Light Enhancement
 
 **IEEE Signal Processing Letters (2025):**
 
@@ -460,7 +553,7 @@ Replace these placeholders with your actual values:
 
 ---
 
-### ** U2Net — Salient Object Detection**
+### U2Net — Salient Object Detection
 
 ```bibtex
 @InProceedings{Qin_2020_PR,
@@ -475,7 +568,7 @@ Replace these placeholders with your actual values:
 
 ---
 
-### ** CodeFormer — Blind Face Restoration**
+### CodeFormer — Blind Face Restoration
 
 ```bibtex
 @inproceedings{zhou2022codeformer,
@@ -499,7 +592,7 @@ BasicSR toolbox:
 
 ---
 
-### ** LaMa — Masked Image Inpainting**
+### LaMa — Masked Image Inpainting
 
 ```bibtex
 @article{suvorov2021resolution,
@@ -512,7 +605,7 @@ BasicSR toolbox:
 
 ---
 
-### ** SAM — Segment Anything Model**
+### SAM — Segment Anything Model
 
 ```bibtex
 @article{kirillov2023segany,
@@ -525,7 +618,7 @@ BasicSR toolbox:
 
 ---
 
-### ** PhotoWCT2 (PCA-Based) — Photorealistic Style Transfer
+### PhotoWCT2 (PCA-Based) — Photorealistic Style Transfer
 
 ```bibtex
 @InProceedings{Chiu_2022_CVPR,

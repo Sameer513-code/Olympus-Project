@@ -1,6 +1,6 @@
 # Adobe PS Project
 
-A complete image processing application featuring AI powered enhancement capabilities and layer based editing workflows. This project was developed for Inter IIT Tech 14.0.
+A complete image processing application featuring AI powered enhancement capabilities and layer based editing workflows.
 
 ## Table of Contents
 
@@ -26,6 +26,21 @@ This backend powers an image editing application with two distinct editing workf
 **Layer Based Editing** provides a multi layer composition system similar to Adobe Photoshop. Users can work with multiple independent image layers, each with individual properties including opacity, blend modes, and transformations.
 
 **AI Auto Enhancement** leverages Google Gemini AI to intelligently analyze composite canvases and recommend enhancement priorities. The system automatically detects which enhancements are needed and suggests the optimal application order.
+
+---
+
+## Note
+
+This README provides a consolidated overview of the project setup and usage. For detailed documentation, please refer to the following resources available in this repository.
+
+| Document | Location | Description |
+|----------|----------|-------------|
+| Backend Documentation | `backend/README.md` | Detailed API documentation, database schemas, and server configuration |
+| Frontend Documentation | `frontend/README.md` | React Native setup, component architecture, and UI guidelines |
+| Master Report | `docs/Master_Report.pdf` | Comprehensive technical report covering architecture, design decisions, and evaluation |
+
+A demonstration video showcasing the application features and workflows is available. Access the demo video via the Google Drive link provided in the repository.
+---
 
 ## System Requirements
 
@@ -171,50 +186,54 @@ The application requires eight Docker containers for AI image processing operati
 | object-masking-service | sameer513/sam-cpu-final | Object segmentation |
 | object-remover-service | sameer513/better-lama | Object inpainting |
 
-### Pulling Docker Images
-
-Execute the following commands to download all required images. Total download size is approximately 10 to 15GB.
-
-```
-docker pull sameer513/lowlight-cpu-bullseye
-docker pull sameer513/codeformer_app
-docker pull sameer513/nafnet-image
-docker pull sameer513/pca-style-transfer-fixed
-docker pull sameer513/u2net-inference
-docker pull sameer513/pct-net-final
-docker pull sameer513/sam-cpu-final
-docker pull sameer513/better-lama
-```
-
-### Creating and Starting Containers
-
-```
-docker run -d --name lowlight-service sameer513/lowlight-cpu-bullseye tail -f /dev/null
-docker run -d --name codeformer-service sameer513/codeformer_app tail -f /dev/null
-docker run -d --name nafnet-service sameer513/nafnet-image tail -f /dev/null
-docker run -d --name style-transfer-service sameer513/pca-style-transfer-fixed tail -f /dev/null
-docker run -d --name background-removal-service sameer513/u2net-inference tail -f /dev/null
-docker run -d --name pct-net-service sameer513/pct-net-final tail -f /dev/null
-docker run -d --name object-masking-service sameer513/sam-cpu-final tail -f /dev/null
-docker run -d --name object-remover-service sameer513/better-lama tail -f /dev/null
-```
-
 Verify all containers are running by executing `docker ps`. Eight containers should be listed with status "Up".
 
 ## AI Models and Compute Profile
 
-### Model Specifications
+| Metric | CodeFormer | LaMa | U²-Net | SAM (ViT-B) | PCA-KD | LYT-Net | NAFNet-width64 | PCT-Net ViT |
+|--------|------------|------|--------|-------------|--------|---------|----------------|-------------|
+| **Task** | Face Restoration | Image Inpainting | Salient Object Segmentation | Promptable Segmentation | Style Transfer | Low-Light Enhancement | Image Denoise/Deblur | Image Harmonization |
+| | | | | | | | | |
+| **PARAMETERS** | | | | | | | | |
+| Total | 94.11M | 51.06M | 44.0M (main) / 1.13M (lite) | 93.74M | 72.84K | 44.92K | 67.89M | 4.81M |
+| | | | | | | | | |
+| **MODEL SIZE** | | | | | | | | |
+| Checkpoint | 376.64 MB | 410.05 MB | 167.8 MB / 4.7 MB (lite) | 357 MB | 0.29 MB | 0.20 MB | 258.98 MB | 18.39 MB |
+| | | | | | | | | |
+| **INPUT/OUTPUT** | | | | | | | | |
+| Input Resolution | 512×512 (FIXED) | Variable + Mask | Variable (opt 320×320) | Variable → 1024 | Variable (÷32) | Variable | Variable | Variable (composite + mask) |
+| Output Resolution | 512×512×3 | Same as input | Same (1 channel) | 3 masks @ input res | Same as input | Same as input | Same as input | Same as input |
+| | | | | | | | | |
+| **CPU INFERENCE** | | | | | | | | |
+| Latency (256×256) | - | - | ~200 ms | 9,009 ms | **65.67 ms** | 245.06 ms | 2,013.88 ms | 126 ms |
+| Latency (512×512) | 4,761 ms | 2,437 ms | ~600 ms | 9,009 ms | **95.58 ms** | 1,006.31 ms | 8,975.93 ms | 356 ms |
+| Latency (Native) | 4,761 ms @512 | 2,437 ms @512 | ~600 ms @320 | 9,009 ms @1024 | 65.67 ms @256 | 245.06 ms @256 | 2,013.88 ms @256 | 659 ms @512 |
+| Throughput (FPS) | 0.21 | 0.41 | ~1.5 | 0.11 | **15.23** | 4.08 | 0.50 | 2.4 |
+| | | | | | | | | |
+| **GPU INFERENCE** | | | | | | | | |
+| GPU Latency (mean) | 70 ms (V100) | ~50-100 ms | 19.73 ms | ~50 ms (A100) | 40 ms (GTX 1080) | 2.3 ms | 8.4% SOTA cost | 25.68 ms |
+| | | | | | | | | |
+| **ACCURACY** | | | | | | | | |
+| Benchmark Dataset | CelebA-Test | Places2 | DUTS-TE | SA-1B (23 datasets) | COCO | LOLv1 | GoPro / SIDD | iHarmony4 |
+| | | | | | | | | |
+| **ARCHITECTURE** | | | | | | | | |
+| Type | Transformer + VQGAN | FFT-based CNN | Nested U-Net | Vision Transformer | Distilled CNN | YUV Transformer | UNet + NAFBlocks | Vision Transformer |
+| | | | | | | | | |
+| **EFFICIENCY** | | | | | | | | |
+| FLOPs/GMACs | ~100 GFLOPs | ~50 GFLOPs | ~30 GFLOPs | ~180 GFLOPs | 0.72% of WCT2 | 3.49 GFLOPs | 1.1-65 GMACs | ~10 GFLOPs |
+| Speed Rank (CPU) | 7th | 5th | 3rd | 8th (slowest) | **1st (fastest)** | 2nd | 4th | 5th |
+| | | | | | | | | |
+| **TRAINING DATA** | | | | | | | | |
+| Dataset | FFHQ | Places2 | DUTS-TR | SA-1B (11M images) | COCO | LOL | GoPro/SIDD | iHarmony4 |
+| | | | | | | | | |
+| **VARIANTS** | | | | | | | | |
+| Available | CodeFormer | LaMa | U²-Net, U²-Net-lite | ViT-B, ViT-L, ViT-H | MobileNet, VGG | LYT | width32, width64, SIDD | ViT_pct, CNN_pct, sym, polynomial, identity, mul, add |
+| Tested Variant | Base | Big-LaMa | Full | ViT-B (93.74M) | MobileNet (72.84K) | Base (44.92K) | width64 (67.89M) | ViT_pct (4.81M) |
 
-| Model | Task | Parameters | Checkpoint Size |
-|-------|------|------------|-----------------|
-| CodeFormer | Face Restoration | 94.11M | 376.64 MB |
-| LaMa | Image Inpainting | 51.06M | 410.05 MB |
-| U2Net | Salient Object Segmentation | 44.0M | 167.8 MB |
-| SAM (ViT-B) | Promptable Segmentation | 93.74M | 357 MB |
-| PCA-KD | Style Transfer | 72.84K | 0.29 MB |
-| LYT-Net | Low Light Enhancement | 44.92K | 0.20 MB |
-| NAFNet | Image Denoise/Deblur | 67.89M | 258.98 MB |
-| PCT-Net ViT | Image Harmonization | 4.81M | 18.39 MB |
+---
+`-` means that data couldn't be computed of models at the metric.
+
+
 
 ### CPU Performance at 512x512 Resolution
 
@@ -574,56 +593,138 @@ docker logs container-name
 # Enter a running container
 docker exec -it container-name bash
 ```
+---
+## GitHub Repositories
+
+| Model | Original Repository |
+|-------|---------------------|
+| NAFNet | [github.com/megvii-research/NAFNet](https://github.com/megvii-research/NAFNet) |
+| PCA-KD | [github.com/chiutaiyin/PCA-Knowledge-Distillation](https://github.com/chiutaiyin/PCA-Knowledge-Distillation) |
+| CodeFormer | [github.com/sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) |
+| U²-Net | [github.com/xuebinqin/U-2-Net](https://github.com/xuebinqin/U-2-Net) |
+| SAM | [github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything) |
+| LaMa | [github.com/advimman/lama](https://github.com/advimman/lama) |
+| LYT-Net | [github.com/albrateanu/LYT-Net](https://github.com/albrateanu/LYT-Net) |
+| PCT-Net | [https://github.com/rakutentech/PCT-Net-Image-Harmonization](https://github.com/rakutentech/PCT-Net-Image-Harmonization) |
+---
 
 ## Citations
 
+If you use this project or any of the integrated models in your research, please cite the appropriate papers.
+
 ### NAFNet
 
-Chen, L., Chu, X., Zhang, X., and Sun, J. (2022). Simple Baselines for Image Restoration. arXiv preprint arXiv:2204.04676.
+```bibtex
+@article{chen2022simple,
+  title={Simple Baselines for Image Restoration},
+  author={Chen, Liangyu and Chu, Xiaojie and Zhang, Xiangyu and Sun, Jian},
+  journal={arXiv preprint arXiv:2204.04676},
+  year={2022}
+}
+```
 
 ### LYT-Net
 
-Brateanu, A., Balmez, R., Avram, A., Orhei, C., and Ancuti, C. (2025). LYT-NET: Lightweight YUV Transformer-based Network for Low-light Image Enhancement. IEEE Signal Processing Letters.
+```bibtex
+@article{brateanu2025lyt,
+  author={Brateanu, Alexandru and Balmez, Raul and Avram, Adrian and Orhei, Ciprian and Ancuti, Cosmin},
+  journal={IEEE Signal Processing Letters},
+  title={LYT-NET: Lightweight YUV Transformer-based Network for Low-light Image Enhancement},
+  year={2025},
+  volume={},
+  number={},
+  pages={1-5},
+  doi={10.1109/LSP.2025.3563125}
+}
+```
+
+```bibtex
+@article{brateanu2024lyt,
+  title={LYT-Net: Lightweight YUV Transformer-based Network for Low-Light Image Enhancement},
+  author={Brateanu, Alexandru and Balmez, Raul and Avram, Adrian and Orhei, Ciprian and Cosmin, Ancuti},
+  journal={arXiv preprint arXiv:2401.15204},
+  year={2024}
+}
+```
 
 ### U2Net
 
-Qin, X., Zhang, Z., Huang, C., Dehghan, M., Zaiane, O., and Jagersand, M. (2020). U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection. Pattern Recognition, 106, 107404.
+```bibtex
+@InProceedings{Qin_2020_PR,
+  title={U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection},
+  author={Qin, Xuebin and Zhang, Zichen and Huang, Chenyang and Dehghan, Masood and Zaiane, Osmar and Jagersand, Martin},
+  journal={Pattern Recognition},
+  volume={106},
+  pages={107404},
+  year={2020}
+}
+```
 
 ### CodeFormer
 
-Zhou, S., Chan, K. C.K., Li, C., and Loy, C. C. (2022). Towards Robust Blind Face Restoration with Codebook Lookup TransFormer. NeurIPS.
+```bibtex
+@inproceedings{zhou2022codeformer,
+  author={Zhou, Shangchen and Chan, Kelvin C.K. and Li, Chongyi and Loy, Chen Change},
+  title={Towards Robust Blind Face Restoration with Codebook Lookup TransFormer},
+  booktitle={NeurIPS},
+  year={2022}
+}
+```
+
+```bibtex
+@misc{basicsr,
+  author={Xintao Wang and Liangbin Xie and Ke Yu and Kelvin C.K. Chan and Chen Change Loy and Chao Dong},
+  title={{BasicSR}: Open Source Image and Video Restoration Toolbox},
+  howpublished={\url{https://github.com/XPixelGroup/BasicSR}},
+  year={2022}
+}
+```
 
 ### LaMa
 
-Suvorov, R., Logacheva, E., Mashikhin, A., Remizova, A., Ashukha, A., Silvestrov, A., Kong, N., Goka, H., Park, K., and Lempitsky, V. (2021). Resolution-robust Large Mask Inpainting with Fourier Convolutions. arXiv preprint arXiv:2109.07161.
+```bibtex
+@article{suvorov2021resolution,
+  title={Resolution-robust Large Mask Inpainting with Fourier Convolutions},
+  author={Suvorov, Roman and Logacheva, Elizaveta and Mashikhin, Anton and Remizova, Anastasia and Ashukha, Arsenii and Silvestrov, Aleksei and Kong, Naejin and Goka, Harshith and Park, Kiwoong and Lempitsky, Victor},
+  journal={arXiv preprint arXiv:2109.07161},
+  year={2021}
+}
+```
 
 ### SAM
 
-Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A. C., Lo, W., Dollar, P., and Girshick, R. (2023). Segment Anything. arXiv:2304.02643.
+```bibtex
+@article{kirillov2023segany,
+  title={Segment Anything},
+  author={Kirillov, Alexander and Mintun, Eric and Ravi, Nikhila and Mao, Hanzi and Rolland, Chloe and Gustafson, Laura and Xiao, Tete and Whitehead, Spencer and Berg, Alexander C. and Lo, Wan-Yen and Doll{\'a}r, Piotr and Girshick, Ross},
+  journal={arXiv:2304.02643},
+  year={2023}
+}
+```
 
-### PCA-KD
+### PCA-KD (PhotoWCT2)
 
-Chiu, T. and Gurari, D. (2022). PCA-Based Knowledge Distillation Towards Lightweight and Content-Style Balanced Photorealistic Style Transfer Models. Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 7844-7853.
+```bibtex
+@InProceedings{Chiu_2022_CVPR,
+  author={Chiu, Tai-Yin and Gurari, Danna},
+  title={PCA-Based Knowledge Distillation Towards Lightweight and Content-Style Balanced Photorealistic Style Transfer Models},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month={June},
+  year={2022},
+  pages={7844-7853}
+}
+```
 
 ### PCT-Net
 
-Guerreiro, J. J. A., Nakazawa, M., and Stenger, B. (2023). PCT-Net: Full Resolution Image Harmonization Using Pixel-Wise Color Transformations. Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 5917-5926.
+```bibtex
+@InProceedings{Guerreiro_2023_CVPR,
+  author={Guerreiro, Julian Jorge Andrade and Nakazawa, Mitsuru and Stenger, Bj\"orn},
+  title={PCT-Net: Full Resolution Image Harmonization Using Pixel-Wise Color Transformations},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month={June},
+  year={2023},
+  pages={5917-5926}
+}
+```
 
-## Original Repositories
-
-| Model | Repository |
-|-------|------------|
-| NAFNet | github.com/megvii-research/NAFNet |
-| PCA-KD | github.com/chiutaiyin/PCA-Knowledge-Distillation |
-| CodeFormer | github.com/sczhou/CodeFormer |
-| U2Net | github.com/xuebinqin/U-2-Net |
-| SAM | github.com/facebookresearch/segment-anything |
-| LaMa | github.com/advimman/lama |
-| LYT-Net | github.com/albrateanu/LYT-Net |
-| PCT-Net | github.com/rakutentech/PCT-Net-Image-Harmonization |
-
-## Project Information
-
-Last Updated: December 2024
-
-Project: Inter IIT Tech 14.0 Adobe PS

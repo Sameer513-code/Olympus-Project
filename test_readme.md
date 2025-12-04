@@ -114,7 +114,7 @@
 | SAM | Segment Anything | `sameer513/sam-cpu-final` |
 | LaMa | Image Inpainting | `sameer513/better-lama` |
 | LYT-Net | Low-Light Enhancement | `sameer513/lowlight-cpu-bullseye` |
-
+| PCT-Net | Image Harmonization | `sameer513/pct-net-final` |
 ---
 
 ## 1. NAFNet (Denoising / Deblurring)

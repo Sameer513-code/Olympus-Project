@@ -1,7 +1,5 @@
 # AI Image Processing Models - Inference Guide
 
-> 📦 **All Docker images available at:** [hub.docker.com/u/sameer513](https://hub.docker.com/u/sameer513)
->
 > 🔗 **Original GitHub repositories linked at the [bottom of this README](#github-repositories)**
 
 ---
@@ -295,7 +293,47 @@ docker cp lytnet:/app/output.jpg <YOUR_LOCAL_OUTPUT_PATH>/
 ```
 
 ---
+Below is the **PCT-Net** section formatted exactly in the same style as your LaMa block.
+You can paste this directly into your README.
 
+---
+
+## 7. PCT-Net (Image Harmonization)
+
+**Task:** Harmonize a composite image so foreground matches the background lighting & color.
+
+### Pull & Run
+
+```bash
+docker pull sameer513/pct-net-final
+docker run -it --name pctnet sameer513/pct-net-final
+```
+
+### Copy Input Files (from another terminal)
+
+```bash
+docker cp <YOUR_COMPOSITE_IMAGE> pctnet:/workspace/examples/composites/
+docker cp <YOUR_MASK_IMAGE> pctnet:/workspace/examples/composites/
+```
+
+### Run Inference (inside container)
+
+```bash
+python3 run_inference.py \
+  --image /workspace/examples/composites/<YOUR_IMAGE_NAME> \
+  --mask /workspace/examples/composites/<YOUR_MASK_NAME> \
+  --weights pretrained_models/PCTNet_ViT.pth \
+  --model_type ViT_pct \
+  --out /workspace/examples/composites/output.jpg
+```
+
+### Copy Output (from another terminal)
+
+```bash
+docker cp pctnet:/workspace/examples/composites/output.jpg <YOUR_LOCAL_OUTPUT_PATH>/
+```
+
+---
 ## Troubleshooting
 
 ### Common Issues
@@ -373,9 +411,143 @@ Replace these placeholders with your actual values:
 
 ---
 
-## Docker Hub
+## 📌 Models & Citations
 
-All pre-built Docker images are available at: **[hub.docker.com/u/sameer513](https://hub.docker.com/u/sameer513)**
+---
 
-You can browse and pull any model directly from there.
+### ** NAFNet — Image Restoration**
+
+**Paper:** *Simple Baselines for Image Restoration*
+
+```bibtex
+@article{chen2022simple,
+  title={Simple Baselines for Image Restoration},
+  author={Chen, Liangyu and Chu, Xiaojie and Zhang, Xiangyu and Sun, Jian},
+  journal={arXiv preprint arXiv:2204.04676},
+  year={2022}
+}
+```
+
+---
+
+### ** LYT-Net — Low-Light Enhancement**
+
+**IEEE Signal Processing Letters (2025):**
+
+```bibtex
+@article{brateanu2025lyt,
+  author={Brateanu, Alexandru and Balmez, Raul and Avram, Adrian and Orhei, Ciprian and Ancuti, Cosmin},
+  journal={IEEE Signal Processing Letters},
+  title={LYT-NET: Lightweight YUV Transformer-based Network for Low-light Image Enhancement},
+  year={2025},
+  volume={},
+  number={},
+  pages={1-5},
+  doi={10.1109/LSP.2025.3563125}
+}
+```
+
+**arXiv Preprint (2024):**
+
+```bibtex
+@article{brateanu2024lyt,
+  title={LYT-Net: Lightweight YUV Transformer-based Network for Low-Light Image Enhancement},
+  author={Brateanu, Alexandru and Balmez, Raul and Avram, Adrian and Orhei, Ciprian and Cosmin, Ancuti},
+  journal={arXiv preprint arXiv:2401.15204},
+  year={2024}
+}
+```
+
+---
+
+### ** U2Net — Salient Object Detection**
+
+```bibtex
+@InProceedings{Qin_2020_PR,
+  title = {U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection},
+  author = {Qin, Xuebin and Zhang, Zichen and Huang, Chenyang and Dehghan, Masood and Zaiane, Osmar and Jagersand, Martin},
+  journal = {Pattern Recognition},
+  volume = {106},
+  pages = {107404},
+  year = {2020}
+}
+```
+
+---
+
+### ** CodeFormer — Blind Face Restoration**
+
+```bibtex
+@inproceedings{zhou2022codeformer,
+  author = {Zhou, Shangchen and Chan, Kelvin C.K. and Li, Chongyi and Loy, Chen Change},
+  title = {Towards Robust Blind Face Restoration with Codebook Lookup TransFormer},
+  booktitle = {NeurIPS},
+  year = {2022}
+}
+```
+
+BasicSR toolbox:
+
+```bibtex
+@misc{basicsr,
+  author = {Xintao Wang and Liangbin Xie and Ke Yu and Kelvin C.K. Chan and Chen Change Loy and Chao Dong},
+  title = {{BasicSR}: Open Source Image and Video Restoration Toolbox},
+  howpublished = {\url{https://github.com/XPixelGroup/BasicSR}},
+  year = {2022}
+}
+```
+
+---
+
+### ** LaMa — Masked Image Inpainting**
+
+```bibtex
+@article{suvorov2021resolution,
+  title={Resolution-robust Large Mask Inpainting with Fourier Convolutions},
+  author={Suvorov, Roman and Logacheva, Elizaveta and Mashikhin, Anton and Remizova, Anastasia and Ashukha, Arsenii and Silvestrov, Aleksei and Kong, Naejin and Goka, Harshith and Park, Kiwoong and Lempitsky, Victor},
+  journal={arXiv preprint arXiv:2109.07161},
+  year={2021}
+}
+```
+
+---
+
+### ** SAM — Segment Anything Model**
+
+```bibtex
+@article{kirillov2023segany,
+  title={Segment Anything},
+  author={Kirillov, Alexander and Mintun, Eric and Ravi, Nikhila and Mao, Hanzi and Rolland, Chloe and Gustafson, Laura and Xiao, Tete and Whitehead, Spencer and Berg, Alexander C. and Lo, Wan-Yen and Doll{\'a}r, Piotr and Girshick, Ross},
+  journal={arXiv:2304.02643},
+  year={2023}
+}
+```
+
+---
+
+### ** PhotoWCT2 (PCA-Based) — Photorealistic Style Transfer
+
+```bibtex
+@InProceedings{Chiu_2022_CVPR,
+  author    = {Chiu, Tai-Yin and Gurari, Danna},
+  title     = {PCA-Based Knowledge Distillation Towards Lightweight and Content-Style Balanced Photorealistic Style Transfer Models},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month     = {June},
+  year      = {2022},
+  pages     = {7844-7853}
+}
+```
+
+### PCT-Net Harmonization Model
+
+```bibtex
+@InProceedings{Guerreiro_2023_CVPR,
+    author    = {Guerreiro, Julian Jorge Andrade and Nakazawa, Mitsuru and Stenger, Bj\"orn},
+    title     = {PCT-Net: Full Resolution Image Harmonization Using Pixel-Wise Color Transformations},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2023},
+    pages     = {5917-5926}
+}
+```
 
